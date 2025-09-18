@@ -850,6 +850,26 @@ namespace Google.Cloud.Spanner.V1
             Transaction GetInlinedTransaction(ExecuteBatchDmlResponse response) => response?.ResultSets?.FirstOrDefault()?.Metadata?.Transaction;
         }
 
+        /// <summary>
+        /// Executes a BatchWrite RPC.
+        /// </summary>
+        /// <remarks>
+        /// This is a streaming call that does not use a transaction from the client perspective.
+        /// It does not use the inline-begin transaction mechanism.
+        /// </remarks>
+        /// <param name="request">The batch write request. Must not be null. The request will be modified with session details
+        /// from this object.</param>
+        /// <param name="callSettings">If not null, applies overrides to this RPC call.</param>
+        /// <returns>A server stream of <see cref="BatchWriteResponse"/> messages.</returns>
+        public SpannerClient.BatchWriteStream BatchWrite(BatchWriteRequest request, CallSettings callSettings)
+        {
+            CheckNotDisposed();
+            GaxPreconditions.CheckNotNull(request, nameof(request));
+
+            request.SessionAsSessionName = SessionName;
+            return Client.BatchWrite(request, callSettings);
+        }
+
         private void MaybeApplyDirectedReadOptions(IReadOrQueryRequest request)
         {
             if (TransactionMode == ModeOneofCase.ReadOnly // Directed reads apply only to single use or read only transactions. Single use are read only.

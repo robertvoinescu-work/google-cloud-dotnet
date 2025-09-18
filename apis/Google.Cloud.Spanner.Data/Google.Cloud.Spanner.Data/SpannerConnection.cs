@@ -973,6 +973,12 @@ namespace Google.Cloud.Spanner.Data
         /// </summary>
         public SpannerBatchCommand CreateBatchDmlCommand() => new SpannerBatchCommand(this);
 
+        /// <summary>
+        /// Creates a new <see cref="SpannerBatchMutationCommand"/> to execute batched mutation groups with this connection.
+        /// You can add mutation groups to the batch by using <see cref="SpannerBatchMutationCommand.Add"/>.
+        /// </summary>
+        public SpannerBatchMutationCommand CreateBatchMutationCommand() => new SpannerBatchMutationCommand(this);
+
         /// <inheritdoc />
         protected override DbCommand CreateDbCommand() => new SpannerCommand(this);
 
