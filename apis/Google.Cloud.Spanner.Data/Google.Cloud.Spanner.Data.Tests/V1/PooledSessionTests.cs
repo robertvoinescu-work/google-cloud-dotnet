@@ -228,6 +228,21 @@ namespace Google.Cloud.Spanner.V1.Tests
         }
 
         [Fact]
+        public void BatchWrite()
+        {
+            var pool = new FakeSessionPool();
+            var pooledSession = PooledSession.FromSessionName(pool, s_sampleSessionName);
+            var request = new BatchWriteRequest();
+
+            pool.Client.Configure().BatchWrite(request, null).Returns((SpannerClient.BatchWriteStream)null);
+
+            pooledSession.BatchWrite(request, null);
+
+            Assert.Equal(s_sampleSessionName, request.SessionAsSessionName);
+            _ = pool.Client.Received(1).BatchWrite(request, null);
+        }
+
+        [Fact]
         public void WithTransaction()
         {
             var pool = new FakeSessionPool();
