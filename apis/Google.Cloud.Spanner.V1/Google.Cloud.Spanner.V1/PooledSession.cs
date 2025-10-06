@@ -862,26 +862,14 @@ namespace Google.Cloud.Spanner.V1
         /// <param name="request">The batch write request. Must not be null.</param>
         /// <param name="callSettings">If not null, applies overrides to this RPC call.</param>
         /// <returns>An asynchronous stream of <see cref="BatchWriteResponse"/> messages.</returns>
-        public async IAsyncEnumerable<BatchWriteResponse> BatchWriteAsync(BatchWriteRequest request, CallSettings callSettings)
+        public IAsyncEnumerable<BatchWriteResponse> BatchWriteAsync(BatchWriteRequest request, CallSettings callSettings)
         {
             CheckNotDisposed();
             GaxPreconditions.CheckNotNull(request, nameof(request));
             request.SessionAsSessionName = SessionName;
 
             SpannerClient.BatchWriteStream stream = Client.BatchWrite(request, callSettings);
-            AsyncResponseStream<BatchWriteResponse> responseStream = stream.GetResponseStream();
-
-            try
-            {
-                while (await responseStream.MoveNextAsync().ConfigureAwait(false))
-                {
-                    yield return responseStream.Current;
-                }
-            }
-            finally
-            {
-                await responseStream.DisposeAsync().ConfigureAwait(false);
-            }
+            return StreamResponsesAndRecordSuccessAsync(stream.GetResponseStream());
         }
 
         private void MaybeApplyDirectedReadOptions(IReadOrQueryRequest request)
@@ -908,6 +896,22 @@ namespace Google.Cloud.Spanner.V1
         {
             await task.WithSessionExpiryChecking(Session).ConfigureAwait(false);
             UpdateRefreshTime();
+        }
+
+        private async IAsyncEnumerable<TResponse> StreamResponsesAndRecordSuccessAsync<TResponse>(AsyncResponseStream<TResponse> responseStream)
+        {
+            try
+            {
+                while (await responseStream.MoveNextAsync().WithSessionExpiryChecking(Session).ConfigureAwait(false))
+                {
+                    UpdateRefreshTime();
+                    yield return responseStream.Current;
+                }
+            }
+            finally
+            {
+                await responseStream.DisposeAsync().ConfigureAwait(false);
+            }
         }
 
         /// <summary>
