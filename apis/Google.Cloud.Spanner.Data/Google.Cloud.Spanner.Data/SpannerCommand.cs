@@ -507,6 +507,9 @@ namespace Google.Cloud.Spanner.Data
         public Task<long> ExecutePartitionedUpdateAsync(CancellationToken cancellationToken = default) =>
             CreateExecutableCommand().ExecutePartitionedUpdateAsync(cancellationToken);
 
+
+        internal Mutation AsMutation() => CreateExecutableCommand().AsMutation();
+
         /// <summary>
         /// Creates an executable command that captures all the necessary information from this command.
         /// </summary>
