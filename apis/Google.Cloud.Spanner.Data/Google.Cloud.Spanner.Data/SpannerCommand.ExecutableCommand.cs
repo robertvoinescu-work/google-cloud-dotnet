@@ -202,6 +202,49 @@ namespace Google.Cloud.Spanner.Data
                 return await transaction.ExecutePartitionedDmlAsync(request, cancellationToken, CommandTimeout).ConfigureAwait(false);
             }
 
+            internal Mutation AsMutation()
+            {
+                // Avoid calling method multiple times in the loop.
+                var conversionOptions = ConversionOptions;
+                // Whatever we do with the parameters, we'll need them in a ListValue.
+                var listValue = new ListValue
+                {
+                    Values = { Parameters.Select(x => x.GetConfiguredSpannerDbType(conversionOptions).ToProtobufValue(x.GetValidatedValue())) }
+                };
+
+                if (CommandTextBuilder.SpannerCommandType != SpannerCommandType.Delete)
+                {
+                    var w = new Mutation.Types.Write
+                    {
+                        Table = CommandTextBuilder.TargetTable,
+                        Columns = { Parameters.Select(x => x.SourceColumn ?? x.ParameterName) },
+                        Values = { listValue }
+                    };
+                    switch (CommandTextBuilder.SpannerCommandType)
+                    {
+                        case SpannerCommandType.Update:
+                            return new Mutation { Update = w };
+                        case SpannerCommandType.Insert:
+                            return new Mutation { Insert = w };
+                        case SpannerCommandType.InsertOrUpdate:
+                            return new Mutation { InsertOrUpdate = w };
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                }
+                else
+                {
+                    var w = new Mutation.Types.Delete
+                    {
+                        Table = CommandTextBuilder.TargetTable,
+                        KeySet = new V1.KeySet { Keys = { listValue } }
+                    };
+                    return new Mutation { Delete = w };
+                }
+            }
+
+            private List<Mutation> AsMutations() => new List<Mutation>{ this.AsMutation() };
+
             private void ValidateConnectionAndCommandTextBuilder()
             {
                 GaxPreconditions.CheckState(Connection != null, "SpannerCommand can only be executed when a connection is assigned.");
@@ -318,53 +361,12 @@ namespace Google.Cloud.Spanner.Data
             private async Task<int> ExecuteMutationsAsync(CancellationToken cancellationToken)
             {
                 await Connection.EnsureIsOpenAsync(cancellationToken).ConfigureAwait(false);
-                var mutations = GetMutations();
+                var mutations = AsMutations();
                 var transaction = Transaction ?? Connection.AmbientTransaction ?? new EphemeralTransaction(Connection, EphemeralTransactionCreationOptions, EphemeralTransactionOptions);
                 // Make the request. This will commit immediately or not depending on whether a transaction was explicitly created.
                 await transaction.ExecuteMutationsAsync(mutations, cancellationToken, CommandTimeout).ConfigureAwait(false);
                 // Return the number of records affected.
                 return mutations.Count;
-            }
-
-            private List<Mutation> GetMutations()
-            {
-                // Avoid calling method multiple times in the loop.
-                var conversionOptions = ConversionOptions;
-                // Whatever we do with the parameters, we'll need them in a ListValue.
-                var listValue = new ListValue
-                {
-                    Values = { Parameters.Select(x => x.GetConfiguredSpannerDbType(conversionOptions).ToProtobufValue(x.GetValidatedValue())) }
-                };
-
-                if (CommandTextBuilder.SpannerCommandType != SpannerCommandType.Delete)
-                {
-                    var w = new Mutation.Types.Write
-                    {
-                        Table = CommandTextBuilder.TargetTable,
-                        Columns = { Parameters.Select(x => x.SourceColumn ?? x.ParameterName) },
-                        Values = { listValue }
-                    };
-                    switch (CommandTextBuilder.SpannerCommandType)
-                    {
-                        case SpannerCommandType.Update:
-                            return new List<Mutation> { new Mutation { Update = w } };
-                        case SpannerCommandType.Insert:
-                            return new List<Mutation> { new Mutation { Insert = w } };
-                        case SpannerCommandType.InsertOrUpdate:
-                            return new List<Mutation> { new Mutation { InsertOrUpdate = w } };
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                    }
-                }
-                else
-                {
-                    var w = new Mutation.Types.Delete
-                    {
-                        Table = CommandTextBuilder.TargetTable,
-                        KeySet = new V1.KeySet { Keys = { listValue } }
-                    };
-                    return new List<Mutation> { new Mutation { Delete = w } };
-                }
             }
 
             // Based on the QueryOptions set at various levels (connection, environment and command),
