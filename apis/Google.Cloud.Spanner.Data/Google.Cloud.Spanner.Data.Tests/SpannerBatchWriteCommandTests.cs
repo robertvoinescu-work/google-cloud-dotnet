@@ -63,6 +63,9 @@ public class SpannerBatchWriteCommandTests
         SpannerConnection connection = SpannerCommandTests.BuildSpannerConnection(spannerClientMock);
         var command = connection.CreateBatchWriteCommand();
 
+        SpannerCommand insertCommand = connection.CreateInsertCommand("SomeTableName", new SpannerParameterCollection { { "SomeKeyName", SpannerDbType.String, "SomeKey" } });
+        command.Add(insertCommand);
+
         command.Priority = priority;
         await foreach (var result in command.ExecuteAsync())
         {

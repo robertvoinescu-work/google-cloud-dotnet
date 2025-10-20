@@ -116,6 +116,7 @@ public sealed class SpannerBatchWriteCommand
             {
                 yield return response;
             }
+            throw new System.Exception();
         }
         finally
         {
