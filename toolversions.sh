@@ -13,7 +13,7 @@ declare -r PROTOC_VERSION=3.25.2
 declare -r GRPC_VERSION=2.60.0
 if [[ $GAPIC_GENERATOR_VERSION == "" ]]
 then
-  declare -r GAPIC_GENERATOR_VERSION=v1.4.36
+  declare -r GAPIC_GENERATOR_VERSION=v1.4.37
 else
   echo "Using GAPIC generator override: ${GAPIC_GENERATOR_VERSION}"
 fi
@@ -46,9 +46,9 @@ esac
 # - Version
 install_nuget_package() {
   local output=$TOOL_PACKAGES/$1.$2
-  # Assume that if the directory exists, it's already installed correctly.  
+  # Assume that if the directory exists, it's already installed correctly.
   if [[ -d $output ]]; then return 0; fi
-  
+
   (mkdir -p $output;
    cd $output;
    curl -sSL https://www.nuget.org/api/v2/package/$1/$2 --output tmp.zip;
@@ -61,7 +61,7 @@ install_nuget_package() {
 
 install_protoc() {
   install_nuget_package Google.Protobuf.Tools $PROTOC_VERSION
-  
+
   # Temporary fix for a broken proto in the protobuf tools package
   sed -i 's/--)/-- )/g' $PROTOBUF_TOOLS_ROOT/tools/google/protobuf/timestamp.proto
   chmod +x $PROTOC
@@ -85,7 +85,7 @@ install_microgenerator() {
       echo "Unknown OSTYPE: $OSTYPE"
       exit 1
   esac
-  
+
   # If the CSHARP_GENERATOR_DIR env variable is set
   # we use that as the generator root dir.
   if [[ "$CSHARP_GENERATOR_DIR" != "" ]]
@@ -94,9 +94,9 @@ install_microgenerator() {
   else
     declare -r GENERATOR_ROOT=$REPO_ROOT/gapic-generator-csharp
   fi
-  
+
   export GAPIC_PLUGIN=$GENERATOR_ROOT/Google.Api.Generator/bin/Release/net8.0/$RUNTIME/publish/Google.Api.Generator$EXTENSION
-  
+
   if [[ "$CSHARP_GENERATOR_DIR" != "" ]]
   then
     echo "Skipping microgenerator fetch: an existing directory for the generator has been specified"
