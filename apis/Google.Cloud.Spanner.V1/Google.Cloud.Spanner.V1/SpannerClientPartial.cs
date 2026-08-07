@@ -14,7 +14,6 @@
 
 using Google.Api.Gax.Grpc;
 using Google.Cloud.Spanner.Common.V1;
-using System.Threading;
 
 namespace Google.Cloud.Spanner.V1
 {
@@ -83,6 +82,7 @@ namespace Google.Cloud.Spanner.V1
             ApplyResourcePrefixHeaderFromDatabase(ref settings, request.Database);
             MaybeApplyRouteToLeaderHeader(ref settings);
             ApplyRequestIdHeader(ref settings);
+            EnableAsyncInterception(ref settings);
         }
 
         partial void Modify_BatchCreateSessionsRequest(ref BatchCreateSessionsRequest request, ref CallSettings settings)
@@ -90,6 +90,7 @@ namespace Google.Cloud.Spanner.V1
             ApplyResourcePrefixHeaderFromDatabase(ref settings, request.Database);
             MaybeApplyRouteToLeaderHeader(ref settings);
             ApplyRequestIdHeader(ref settings);
+            EnableAsyncInterception(ref settings);
         }
 
         partial void Modify_GetSessionRequest(ref GetSessionRequest request, ref CallSettings settings)
@@ -97,6 +98,7 @@ namespace Google.Cloud.Spanner.V1
             ApplyResourcePrefixHeaderFromSession(ref settings, request.Name);
             MaybeApplyRouteToLeaderHeader(ref settings);
             ApplyRequestIdHeader(ref settings);
+            EnableAsyncInterception(ref settings);
         }
 
         partial void Modify_ListSessionsRequest(ref ListSessionsRequest request, ref CallSettings settings)
@@ -104,6 +106,7 @@ namespace Google.Cloud.Spanner.V1
             // This operation is never routed to leader so we don't call MaybeApplyRouteToLeaderHeader.
             ApplyResourcePrefixHeaderFromDatabase(ref settings, request.Database);
             ApplyRequestIdHeader(ref settings);
+            EnableAsyncInterception(ref settings);
         }
 
         partial void Modify_DeleteSessionRequest(ref DeleteSessionRequest request, ref CallSettings settings)
@@ -111,6 +114,7 @@ namespace Google.Cloud.Spanner.V1
             // This operation is never routed to leader so we don't call MaybeApplyRouteToLeaderHeader.
             ApplyResourcePrefixHeaderFromSession(ref settings, request.Name);
             ApplyRequestIdHeader(ref settings);
+            EnableAsyncInterception(ref settings);
         }
 
         partial void Modify_ExecuteSqlRequest(ref ExecuteSqlRequest request, ref CallSettings settings)
@@ -119,6 +123,7 @@ namespace Google.Cloud.Spanner.V1
             // We don't have that information here so the leader routing header needs to be applied elsewhere.
             ApplyResourcePrefixHeaderFromSession(ref settings, request.Session);
             ApplyRequestIdHeader(ref settings);
+            EnableAsyncInterception(ref settings);
         }
 
         partial void Modify_ExecuteBatchDmlRequest(ref ExecuteBatchDmlRequest request, ref CallSettings settings)
@@ -126,6 +131,7 @@ namespace Google.Cloud.Spanner.V1
             ApplyResourcePrefixHeaderFromSession(ref settings, request.Session);
             MaybeApplyRouteToLeaderHeader(ref settings);
             ApplyRequestIdHeader(ref settings);
+            EnableAsyncInterception(ref settings);
         }
 
         partial void Modify_ReadRequest(ref ReadRequest request, ref CallSettings settings)
@@ -134,6 +140,7 @@ namespace Google.Cloud.Spanner.V1
             // We don't have that information here so the leader routing header needs to be applied elsewhere.
             ApplyResourcePrefixHeaderFromSession(ref settings, request.Session);
             ApplyRequestIdHeader(ref settings);
+            EnableAsyncInterception(ref settings);
         }
 
         partial void Modify_BeginTransactionRequest(ref BeginTransactionRequest request, ref CallSettings settings)
@@ -141,6 +148,7 @@ namespace Google.Cloud.Spanner.V1
             ApplyResourcePrefixHeaderFromSession(ref settings, request.Session);
             MaybeApplyRouteToLeaderHeader(ref settings, request.Options?.ModeCase ?? TransactionOptions.ModeOneofCase.None);
             ApplyRequestIdHeader(ref settings);
+            EnableAsyncInterception(ref settings);
         }
 
         partial void Modify_CommitRequest(ref CommitRequest request, ref CallSettings settings)
@@ -148,6 +156,7 @@ namespace Google.Cloud.Spanner.V1
             ApplyResourcePrefixHeaderFromSession(ref settings, request.Session);
             MaybeApplyRouteToLeaderHeader(ref settings);
             ApplyRequestIdHeader(ref settings);
+            EnableAsyncInterception(ref settings);
         }
 
         partial void Modify_RollbackRequest(ref RollbackRequest request, ref CallSettings settings)
@@ -155,6 +164,7 @@ namespace Google.Cloud.Spanner.V1
             ApplyResourcePrefixHeaderFromSession(ref settings, request.Session);
             MaybeApplyRouteToLeaderHeader(ref settings);
             ApplyRequestIdHeader(ref settings);
+            EnableAsyncInterception(ref settings);
         }
 
         partial void Modify_PartitionQueryRequest(ref PartitionQueryRequest request, ref CallSettings settings)
@@ -162,6 +172,7 @@ namespace Google.Cloud.Spanner.V1
             ApplyResourcePrefixHeaderFromSession(ref settings, request.Session);
             MaybeApplyRouteToLeaderHeader(ref settings);
             ApplyRequestIdHeader(ref settings);
+            EnableAsyncInterception(ref settings);
         }
 
         partial void Modify_PartitionReadRequest(ref PartitionReadRequest request, ref CallSettings settings)
@@ -169,6 +180,7 @@ namespace Google.Cloud.Spanner.V1
             ApplyResourcePrefixHeaderFromSession(ref settings, request.Session);
             MaybeApplyRouteToLeaderHeader(ref settings);
             ApplyRequestIdHeader(ref settings);
+            EnableAsyncInterception(ref settings);
         }
 
         partial void Modify_BatchWriteRequest(ref BatchWriteRequest request, ref CallSettings settings)
@@ -176,6 +188,7 @@ namespace Google.Cloud.Spanner.V1
             ApplyResourcePrefixHeaderFromSession(ref settings, request.Session);
             MaybeApplyRouteToLeaderHeader(ref settings);
             ApplyRequestIdHeader(ref settings);
+            EnableAsyncInterception(ref settings);
         }
 
         internal static void ApplyResourcePrefixHeaderFromDatabase(ref CallSettings settings, string resource)
@@ -207,6 +220,14 @@ namespace Google.Cloud.Spanner.V1
                 settings = settings.WithHeader(ResourcePrefixHeader, database.ToString());
             }
         }
+
+        /// <summary>
+        /// A no-op response metadata handler that prompts GAX to dispatch synchronous calls through the asynchronous
+        /// gRPC pipeline. This ensures response headers are always accessible and allows interceptors to handle all
+        /// unary calls uniformly via the async path. This is being done to enable the capture of Built In Metrics.
+        /// </summary>
+        internal static void EnableAsyncInterception(ref CallSettings settings) =>
+            settings = settings.WithResponseMetadataHandler(_ => { });
 
         internal void ApplyRequestIdHeader(ref CallSettings settings)
         {
