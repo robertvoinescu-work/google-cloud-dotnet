@@ -133,8 +133,19 @@ public class SpannerBuiltInMetricsInterceptorTests
     }
 
     // Represents a successfully captured telemetry metric measurement event.
-    private record Measurement(string Name, object Value, KeyValuePair<string, object>[] Tags)
+    private class Measurement
     {
+        public string Name { get; }
+        public object Value { get; }
+        public KeyValuePair<string, object>[] Tags { get; }
+
+        public Measurement(string name, object value, KeyValuePair<string, object>[] tags)
+        {
+            Name = name;
+            Value = value;
+            Tags = tags ?? Array.Empty<KeyValuePair<string, object>>();
+        }
+
         public string GetTag(string key) => Tags.FirstOrDefault(t => t.Key == key).Value?.ToString();
     }
 
