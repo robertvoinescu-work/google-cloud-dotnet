@@ -16,6 +16,7 @@ using Google.Cloud.Spanner.Common.V1;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Linq;
@@ -204,7 +205,9 @@ public class SpannerBuiltInMetricsInterceptorTests
 
     private static async Task<IReadOnlyList<Measurement>> RunWithMeterListenerAsync(Func<Task> action)
     {
-        var measurements = new List<Measurement>();
+        // Use a thread-safe collection because metrics (such as attempt latency and server-timing)
+        // are emitted concurrently across threads during call completion.
+        var measurements = new ConcurrentQueue<Measurement>();
         using var listener = new MeterListener();
 
         // Arrange our listener so it tracks metrics on the BuiltInMetrics meter
@@ -218,16 +221,16 @@ public class SpannerBuiltInMetricsInterceptorTests
 
         // Record all metrics that are emitted
         listener.SetMeasurementEventCallback<double>((instrument, measurement, tags, state) =>
-            measurements.Add(new Measurement(instrument.Name, measurement, tags.ToArray())));
+            measurements.Enqueue(new Measurement(instrument.Name, measurement, tags.ToArray())));
         listener.SetMeasurementEventCallback<long>((instrument, measurement, tags, state) =>
-            measurements.Add(new Measurement(instrument.Name, measurement, tags.ToArray())));
+            measurements.Enqueue(new Measurement(instrument.Name, measurement, tags.ToArray())));
 
         // Start listening and execute the action that emits metrics
         listener.Start();
         await action();
         listener.Dispose();
 
-        return measurements;
+        return measurements.ToList();
     }
 
     private class FakeCallInvoker : CallInvoker
