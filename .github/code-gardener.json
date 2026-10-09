@@ -1,0 +1,27 @@
+{
+  "$schema": "https://raw.githubusercontent.com/robertvoinescu-work/code-gardener/main/schemas/code-gardener.schema.json",
+  "language": "csharp",
+  "discovery": "smart-recency",
+  "auditPatterns": [
+    "apis/*/*/*.cs",
+    "apis/*/*/**/*.cs"
+  ],
+  "readOnlyContextPatterns": [
+    "**/*.g.cs",
+    "**/*.Generated.cs",
+    "**/Generated/**",
+    "**/*Snippets/**",
+    "**/*Tests/**"
+  ],
+  "excludePatterns": [
+    "**/bin/**",
+    "**/obj/**",
+    "**/.git/**"
+  ],
+  "testCommand": "bash -c \"if [ -d '{target_project}.Tests' ]; then dotnet test '{target_project}.Tests' --filter 'FullyQualifiedName!~Conformance&FullyQualifiedName!~V4SignerTest'; else dotnet build '{target_project}'; fi\"",
+  "rateLimit": 1,
+  "prConcurrentLimit": 2,
+  "autoRebase": true,
+  "respectClosedPRs": true,
+  "draft": true
+}
