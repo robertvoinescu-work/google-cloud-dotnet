@@ -23,16 +23,31 @@ namespace Google.Cloud.Storage.V1.Tests;
 public class RetryTimingTest
 {
     [Fact]
-    public void InvalidInitialBackOff() => Assert.Throws<ArgumentOutOfRangeException>(() =>
-        RetryTiming.Default.WithInitialBackoff(initialBackoff: TimeSpan.FromSeconds(-1)));
+    public void InvalidInitialBackOff()
+    {
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            RetryTiming.Default.WithInitialBackoff(initialBackoff: TimeSpan.FromSeconds(-1)));
+        Assert.Contains("non-negative", exception.Message);
+        Assert.Contains("-00:00:01", exception.Message);
+    }
 
     [Fact]
-    public void InvalidBackOffMultiplier() => Assert.Throws<ArgumentOutOfRangeException>(() =>
-        RetryTiming.Default.WithBackoffMultiplier(backoffMultiplier: 0));
+    public void InvalidBackOffMultiplier()
+    {
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            RetryTiming.Default.WithBackoffMultiplier(backoffMultiplier: 0));
+        Assert.Contains("must at least be 1", exception.Message);
+        Assert.Contains("'0'", exception.Message);
+    }
 
     [Fact]
-    public void InvalidMaxBackOff() => Assert.Throws<ArgumentOutOfRangeException>(() =>
-        RetryTiming.Default.WithMaxBackoff(maxBackoff: TimeSpan.FromSeconds(0)));
+    public void InvalidMaxBackOff()
+    {
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            RetryTiming.Default.WithMaxBackoff(maxBackoff: TimeSpan.FromSeconds(0)));
+        Assert.Contains("must be at least as long as initialBackoff", exception.Message);
+        Assert.Contains("'00:00:00'", exception.Message);
+    }
 
     [Fact]
     public void MaxBackOff_LessThanInitialBackoff() => Assert.Throws<ArgumentOutOfRangeException>(() =>

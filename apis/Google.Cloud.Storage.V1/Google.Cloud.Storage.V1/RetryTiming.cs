@@ -64,9 +64,9 @@ public sealed class RetryTiming
     /// <param name="backoffMultiplier">Backoff multiplier for retry. Must be greater than or equal to 1.0.</param>
     public RetryTiming(TimeSpan initialBackoff, TimeSpan maxBackoff, double backoffMultiplier)
     {
-        InitialBackoff = initialBackoff >= TimeSpan.Zero ? initialBackoff : throw new ArgumentOutOfRangeException(nameof(initialBackoff), $"Parameter value '{InitialBackoff}' must at least be 1.");
-        MaxBackoff = maxBackoff >= initialBackoff ? maxBackoff : throw new ArgumentOutOfRangeException(nameof(maxBackoff), $"Parameter value '{MaxBackoff}' must be at least as long as initialBackoff.");
-        BackoffMultiplier = backoffMultiplier >= 1 ? backoffMultiplier : throw new ArgumentOutOfRangeException(nameof(backoffMultiplier), $"Parameter value '{BackoffMultiplier}' must at least be 1.");
+        InitialBackoff = initialBackoff >= TimeSpan.Zero ? initialBackoff : throw new ArgumentOutOfRangeException(nameof(initialBackoff), $"Parameter value '{initialBackoff}' must be non-negative.");
+        MaxBackoff = maxBackoff >= initialBackoff ? maxBackoff : throw new ArgumentOutOfRangeException(nameof(maxBackoff), $"Parameter value '{maxBackoff}' must be at least as long as initialBackoff.");
+        BackoffMultiplier = backoffMultiplier >= 1 ? backoffMultiplier : throw new ArgumentOutOfRangeException(nameof(backoffMultiplier), $"Parameter value '{backoffMultiplier}' must at least be 1.");
     }
 
     /// <summary>
