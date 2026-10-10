@@ -1,0 +1,30 @@
+name: Code Gardener
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Run nightly at 02:00 UTC
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Perform dry-run without creating PRs'
+        type: boolean
+        default: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout Target Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Code Gardener
+        uses: robertvoinescu-work/code-gardener@main
+        with:
+          dry_run: ${{ inputs.dry_run || false }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
